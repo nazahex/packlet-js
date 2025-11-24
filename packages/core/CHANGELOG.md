@@ -1,5 +1,11 @@
 # @packlet/core
 
+## 0.1.3
+
+### Patch Changes
+
+- 68e1755: Packlet now supports using `package.json.packlet` options alongside command-line arguments. And also migrate the CLI implementation to Clibu to improve efficiency and reduce overhead.
+
 ## 0.1.2
 
 ### Patch Changes

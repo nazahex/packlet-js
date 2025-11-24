@@ -1,6 +1,6 @@
 {
   "name": "@packlet/build",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Packlet build wrapper: build ESM, d.ts, and CJS (opt-in) for packages and expose programmatic API.",
   "license": "MIT",
   "homepage": "https://github.com/kazvizian/packlet-js",
