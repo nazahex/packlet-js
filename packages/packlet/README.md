@@ -3,101 +3,224 @@
 # 📦️ packlet
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-%23007ACC.svg?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Bun](https://img.shields.io/badge/Bun-%23000000.svg?logo=bun&logoColor=white)](https://bun.sh)<br />
-![Conventional Commits](https://img.shields.io/badge/commit-conventional-blue.svg)
-[![Commitizen friendly](https://img.shields.io/badge/commitizen-friendly-brightgreen.svg)](http://commitizen.github.io/cz-cli/)
-![license](https://img.shields.io/github/license/kazvizian/packlet-js)<br />
-[![Turborepo](https://img.shields.io/badge/-Turborepo-EF4444?logo=turborepo&logoColor=white)](https://turbo.build)
-[![Changesets Butterfly](https://img.shields.io/badge/Changesets-🦋-white)](./CHANGELOG.md)
-[![Biome Linter & Formatted](https://img.shields.io/badge/Biome-60a5fa?style=flat&logo=biome&logoColor=white)](https://biomejs.dev/)
-
-[![gzip size](http://img.badgesize.io/https://unpkg.com/packlet@latest/dist/index.mjs?compression=gzip)](https://unpkg.com/packlet@latest/dist/index.mjs)
+[![Bun](https://img.shields.io/badge/Bun-%23000000.svg?logo=bun&logoColor=white)](https://bun.sh)
+![NodeJS](https://img.shields.io/badge/node.js-6DA55F?logo=node.js&logoColor=white)<br />
+![license](https://img.shields.io/github/license/kazvizian/packlet-js)
 
 </div>
 
-> The main public package for the Packlet toolkit. Installs a single CLI (`packlet`) and a small programmatic API for deterministic packaging and artifact generation.
+## What is Packlet?
 
-Packlet focuses on:
+`packlet` is the primary command-line interface of the Packlet toolkit, designed to provide a unified, predictable, and developer-friendly workflow for building modern JavaScript/TypeScript packages. It bundles your project, emits type declarations, validates your output, and generates deterministic artifacts that are ready for distribution.
 
-- Deterministic packing and artifact generation (manifest, tarballs)
-- Simple, local-first workflows that also fit CI
-- A stable `artifacts.json` contract shared with CI/publishing tools
+At its core, Packlet is built to be simple: one CLI, one configuration model, and one consistent experience. Whether you are publishing libraries, internal modules, CLI tools, or SDKs, `packlet` offers a streamlined build-and-prepare pipeline you can rely on.
 
-If you’re looking for orchestration and publishing (tokens, CI, releases), see the companion project “sailet”.
+## Why Packlet?
+
+The JavaScript ecosystem offers many build tools, but very few aim to simplify the _entire lifecycle_ of producing a clean, distribution-ready package. Packlet fills this gap by delivering a focused set of features designed for reliability, repeatability, and minimal configuration:
+
+- **One command to build, validate, and prepare artifacts**—without juggling multiple tools.
+- **Modern output by default**: ESM-first with optional CJS, fully typed, and ready for node and bundlers.
+- **Deterministic release artifacts** (via `npm pack`) tailored for GitHub Packages (GPR) or any npm registry.
+- **Clear validation** to ensure your `dist/` directory contains everything your consumers expect.
+- **Universal: works with Bun, Node.js, or any toolchain** that interoperates with npm packages.
+- **Zero lock-in**: Packlet does not manage your release pipeline; it integrates with _your_ workflow.
+
+If you want a minimal, predictable, and automation-friendly path from `src/` to publish-ready artifacts, Packlet is designed for you.
 
 ## Installation
+
+Install Packlet as a development dependency:
 
 ```sh
 # with bun
 bun add -D packlet
 
-# or with npm
-npm i -D packlet
-
-# or globally
-bun add -g packlet
-# npm i -g packlet
+# with npm
+npm install -D packlet
 ```
 
-## Quick Start
+You may also install it globally:
 
 ```sh
-# build your package (ESM by default; add CJS with --cjs)
+bun add -g packlet
+# or
+npm install -g packlet
+```
+
+## Quick start
+
+Once installed, the `packlet` command becomes available:
+
+```sh
+# build your package (ESM by default; add CJS via --cjs)
 packlet build
 
-# prepare a GPR variant and write a JSON manifest
+# create a GPR-ready variant and write a JSON manifest
 packlet gpr --root . --json
 
-# list artifacts (human)
+# list generated tarball artifacts
 packlet list-artifacts --artifacts .artifacts
-
-# list artifacts (JSON)
-packlet list-artifacts --artifacts .artifacts --json
 
 # validate dist contents
 packlet validate --root . --json
 ```
 
-## CLI Commands
+Or through `package.json` scripts:
 
-- `packlet build` – Build ESM (default) and emit types; add `--cjs` to also emit CommonJS
-- `packlet gpr` – Prepare a GitHub Packages (GPR) scoped build and tarballs
-  Flags: `--root`, `--gpr-dir`, `--artifacts`, `--dist`, `--scope`, `--registry`, `--name` (scoped or unscoped),
-  `--include-readme`, `--no-include-readme`, `--include-license`, `--no-include-license`,
-  `--json`, `--manifest <file>`
+```jsonc
+{
+  "scripts": {
+    "build": "packlet build",
+    "build:cjs": "packlet build --cjs",
+    "gpr": "packlet gpr --root . --json",
+    "validate": "packlet validate --root . --json"
+  }
+}
+```
 
-- `packlet validate` – Verify common dist entries (`index.js`, `index.mjs`, `index.d.ts`)
+## CLI commands
 
-- `packlet list-artifacts` – List `.tgz` files under an artifacts directory
+### `packlet build`
 
-> Note: The `@packlet/gpr` package also exposes a light `prepare` subcommand for CI.
+Builds your package using sensible defaults:
+
+- ESM output (`dist/index.mjs`)
+- Optional CJS output via `--cjs`
+- Type declarations emitted to `dist/`
+
+Common options:
+
+- `--entry <file>`: entry point (default: `src/index.ts`)
+- `--outdir <dir>`: output directory (default: `dist`)
+- `--formats <list>`: `esm,cjs`, etc.
+- `--cjs`: shorthand to enable CJS output
+- `--sourcemap <mode>`: `external` or `none`
+- `--types` / `--no-types`: enable or disable `.d.ts`
+- `--target <target>`: build target (default: `node`)
+- `--exec-js`: mark output as an executable script
+- `--minify` / `--no-minify`: minification control
+- `--external <packages>`: treat specific packages as external
+- `--external-auto`: externalize deps and peerDeps automatically
+
+### `packlet gpr`
+
+Stages a GitHub Packages–compatible variant of your package and generates `.tgz` artifacts.
+
+Key options:
+
+- `--root <path>`: project root
+- `--dist <path>`: dist directory (default: `dist`)
+- `--gpr-dir <path>`: staging directory (default: `.gpr`)
+- `--artifacts <path>`: output directory (default: `.artifacts`)
+- `--scope <scope>`: npm scope
+- `--registry <url>`: registry URL
+- `--name <name>`: override package name
+- `--include-readme` / `--no-include-readme`
+- `--include-license` / `--no-include-license`
+- `--json`: print manifest to stdout
+- `--manifest <file>`: write manifest to file
+
+Packlet copies your build output, adjusts metadata, and uses `npm pack` to produce deterministic release tarballs.
+
+### `packlet validate`
+
+Ensures your `dist/` output contains the expected entry files:
+
+- `index.mjs` (ESM)
+- `index.d.ts`
+- `index.js` (optional, when CJS is enabled)
+
+Options:
+
+- `--root <path>`
+- `--dist <path>`
+- `--json`: output as JSON
+
+### `packlet list-artifacts`
+
+Lists `.tgz` artifacts generated by `npm pack`.
+
+Options:
+
+- `--artifacts <path>`
+- `--json`
+
+## Configuration
+
+Packlet supports a unified configuration model via `package.json.packlet`. This allows you to define defaults for all commands in one place.
+
+Example:
+
+```jsonc
+{
+  "packlet": {
+    "distDir": "dist",
+    "artifactsDir": ".artifacts",
+    "gprDir": ".gpr",
+
+    "build": {
+      "entry": "src/index.ts",
+      "outdir": "dist",
+      "formats": ["esm"],
+      "sourcemap": "none",
+      "types": true,
+      "target": "node",
+      "execJs": false,
+      "minify": true,
+      "external": [],
+      "externalAuto": true
+    },
+
+    "gpr": true,
+    "gprName": "your-package-name",
+    "scope": "your-scope",
+    "registry": "https://npm.pkg.github.com/",
+    "includeReadme": true,
+    "includeLicense": true,
+
+    "validate": { "dist": "dist" },
+    "listArtifacts": { "artifactsDir": ".artifacts" }
+  }
+}
+```
+
+Configuration precedence:
+
+1. CLI flags
+2. Environment variables (`PACKLET_*`, `GPR_*`)
+3. `package.json.packlet`
+4. Built-in defaults
+
+For advanced configuration and environment variable behavior, see the [`@packlet/core`](https://www.npmjs.com/package/@packlet/core).
 
 ## Programmatic API
 
-Install as a dev dependency and import what you need:
+Packlet exposes a focused API surface suitable for embedding in your own tools, build scripts, or CI pipelines:
 
 ```ts
 import {
-  // Core helpers
   listArtifacts,
   writeArtifactsManifest,
   validateDist,
   deriveScopedName,
-  // GPR helper
   awakenGpr
 } from "packlet"
 
 const result = validateDist({ distDir: "dist" })
 const artifacts = listArtifacts(".artifacts")
+
 const manifest = writeArtifactsManifest(".artifacts", {
   packageName: "my-lib",
   scopedName: "@acme/my-lib",
   version: "1.2.3"
 })
+
 const gpr = awakenGpr({ rootDir: process.cwd() })
+console.log(gpr.scopedName, gpr.version)
 ```
 
-### Types
+Types are also exported:
 
 ```ts
 import type {
@@ -108,88 +231,6 @@ import type {
   DeriveNameInput
 } from "packlet"
 ```
-
-## Artifacts Manifest
-
-Running `packlet gpr` writes `<root>/.artifacts/artifacts.json`:
-
-```json
-{
-  "schemaVersion": 1,
-  "packageName": "<base-name>",
-  "scopedName": "@<scope>/<base-name>",
-  "version": "<semver>",
-  "artifacts": [
-    { "file": "<name>-<version>.tgz", "size": 12345, "sha512": "..." }
-  ]
-}
-```
-
-## Name derivation (GPR)
-
-Priority for computing the GPR package name:
-
-1. Explicit overrides
-
-- `packlet.gprName` in `package.json` (scoped or unscoped), or
-- `--name` flag / `GPR_NAME` env (scoped or unscoped)
-
-2. Monorepo default: use the package name
-
-- In monorepos (`packages/*`), use `package.json.name` (scope stripped) as the base.
-
-3. Single-package repos: repo or package name
-
-- Use repo name from `repository.url` if present, otherwise `package.json.name` (scope stripped).
-
-Unscoped bases are combined with scope (default `kazvizian`) → `@<scope>/<base>`.
-
-### package.json config
-
-```jsonc
-{
-  "packlet": {
-    "gpr": true,
-    // optional; unscoped becomes @<scope>/<name>, scoped is used verbatim
-    "gprName": "packlet-core"
-  }
-}
-```
-
-## Monorepo Notes
-
-This package lives in a monorepo alongside:
-
-- `@packlet/core` – utilities: manifest, validation, name derivation, copy helpers
-- `@packlet/gpr` – preparing GPR-scoped variants and tarballs
-- `@packlet/cli` – CLI implementation (consumed here)
-
-### Build Wrapper
-
-The build is performed by the shared wrapper `@packlet/build`:
-
-- Generates minified ESM output by default (`dist/index.mjs`). CJS can be emitted with `--cjs` (produces `dist/index.cjs`).
-- Emits types (`dist/index.d.ts`) via `tsc --emitDeclarationOnly`.
-- Sourcemaps are disabled by default for release builds; enable external maps with `--sourcemap external` for debugging.
-- For CLI packages we pass `--exec-js` so the built JS entry (`dist/index.mjs` or `dist/index.cjs`) is marked executable.
-
-`package.json` excerpt:
-
-```json
-{
-  "scripts": {
-    "build": "node ../build/dist/cli.mjs build --sourcemap none --external-auto",
-    "build:cli": "node ../build/dist/cli.mjs build --cjs --exec-js --sourcemap none --external-auto"
-  },
-  "devDependencies": {
-    "@packlet/build": "workspace:*"
-  }
-}
-```
-
-Use `--no-minify` during debugging if you need readable output.
-
-> **Note:** `@packlet/build` invokes `bun build` under the hood for bundling. Bun must be installed on the machine where you run package builds (recommended Bun >= 1.2.0). If Bun is not available, the build step (CLI or package scripts that call `packlet build` / `packlet-build`) will fail. For CI environments without Bun you can either install Bun in the runner or use the programmatic API with an alternate bundler workflow.
 
 ## License
 
