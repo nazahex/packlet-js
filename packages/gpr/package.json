@@ -40,11 +40,12 @@
     "test": "bun test"
   },
   "dependencies": {
-    "commander": "^14.0.2",
-    "@packlet/core": "^0.1.2"
+    "@packlet/core": "^0.1.2",
+    "clibu": "^0.1.0"
   },
   "devDependencies": {
-    "@packlet/build": "workspace:*"
+    "@packlet/build": "workspace:*",
+    "@packlet/core": "workspace:^"
   },
   "keywords": [
     "kazviz",

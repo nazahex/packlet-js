@@ -1,32 +1,56 @@
 {
   "name": "root",
   "version": "0.0.0",
-  "private": true,
-  "description": "A KazVizian focused toolkit to prepare deterministic release artifacts and packaging.",
-  "license": "MIT",
-  "homepage": "https://github.com/kazvizian/packlet-js",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/kazvizian/packlet-js.git"
-  },
-  "bugs": {
-    "url": "https://github.com/kazvizian/packlet-js/issues"
-  },
   "author": {
     "name": "KazViz",
     "email": "kazviz@nazator.com",
     "url": "https://kazviz.com"
   },
-  "workspaces": [
-    "packages/*"
-  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kazvizian/packlet-js.git"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.3.4",
+    "@changesets/cli": "^2.29.7",
+    "@commitlint/cli": "^20.1.0",
+    "@commitlint/config-conventional": "^20.0.0",
+    "@types/bun": "^1.3.1",
+    "@types/node": "^24.10.0",
+    "lefthook": "^2.0.2",
+    "prettier": "^3.6.2",
+    "turbo": "^2.6.0",
+    "typescript": "^5.9.3"
+  },
+  "bugs": {
+    "url": "https://github.com/kazvizian/packlet-js/issues"
+  },
+  "commitlint": {
+    "extends": [
+      "@commitlint/config-conventional"
+    ]
+  },
+  "description": "A KazVizian focused toolkit to prepare deterministic release artifacts and packaging.",
+  "engines": {
+    "bun": ">=1.2.0",
+    "node": ">=18"
+  },
+  "homepage": "https://github.com/kazvizian/packlet-js",
+  "license": "MIT",
+  "packageManager": "bun@1.3.1",
+  "private": true,
   "scripts": {
     "build": "turbo run build",
     "clean": "turbo run clean",
     "test": "turbo run test --continue",
     "test:coverage": "turbo run test --continue -- --coverage",
     "lint": "biome check",
-    "lint:fix": "biome check --apply",
+    "lint:fix": "biome check --write",
     "format": "biome check --write && bun run prettier:write",
     "format:check": "biome check && bun run prettier:check",
     "ci:local": "bun run clean && bun run build && bun run test && bun run lint && bun run format:check",
@@ -37,32 +61,7 @@
     "prettier:check": "prettier --check \"**/*.{md,yml,yaml}\"",
     "postinstall": "lefthook install"
   },
-  "devDependencies": {
-    "@biomejs/biome": "2.3.4",
-    "@changesets/cli": "^2.29.7",
-    "@commitlint/cli": "^20.1.0",
-    "@commitlint/config-conventional": "^20.0.0",
-    "@types/bun": "^1.3.1",
-    "@types/node": "^24.10.0",
-    "commander": "^14.0.2",
-    "lefthook": "^2.0.2",
-    "prettier": "^3.6.2",
-    "turbo": "^2.6.0",
-    "typescript": "^5.9.3"
-  },
-  "engines": {
-    "bun": ">=1.2.0",
-    "node": ">=18"
-  },
-  "packageManager": "bun@1.3.1",
-  "commitlint": {
-    "extends": [
-      "@commitlint/config-conventional"
-    ]
-  },
-  "config": {
-    "commitizen": {
-      "path": "./node_modules/cz-conventional-changelog"
-    }
-  }
+  "workspaces": [
+    "packages/*"
+  ]
 }

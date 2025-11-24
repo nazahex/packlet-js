@@ -40,13 +40,14 @@
     "clean": "rm -rf dist .tsbuildinfo"
   },
   "dependencies": {
-    "commander": "^14.0.2",
+    "@packlet/build": "^0.2.1",
     "@packlet/core": "^0.1.2",
     "@packlet/gpr": "^0.2.1",
-    "@packlet/build": "^0.2.1"
+    "clibu": "^0.1.0"
   },
   "devDependencies": {
-    "@packlet/build": "workspace:*"
+    "@packlet/build": "workspace:*",
+    "@packlet/core": "workspace:*"
   },
   "packlet": {
     "gpr": true,
