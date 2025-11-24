@@ -1,5 +1,15 @@
 # @packlet/cli
 
+## 0.3.3
+
+### Patch Changes
+
+- 68e1755: Packlet now supports using `package.json.packlet` options alongside command-line arguments. And also migrate the CLI implementation to Clibu to improve efficiency and reduce overhead.
+- Updated dependencies [68e1755]
+  - @packlet/build@0.2.2
+  - @packlet/core@0.1.3
+  - @packlet/gpr@0.2.2
+
 ## 0.3.2
 
 ### Patch Changes

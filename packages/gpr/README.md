@@ -5,7 +5,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-%23007ACC.svg?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Bun](https://img.shields.io/badge/Bun-%23000000.svg?logo=bun&logoColor=white)](https://bun.sh)
 ![NodeJS](https://img.shields.io/badge/node.js-6DA55F?logo=node.js&logoColor=white)<br />
-![license](https://img.shields.io/github/license/kazvizian/packlet-js)
+![license](https://img.shields.io/github/license/nazahex/packlet-js)
 
 Lightweight tooling for preparing packages for distribution through GitHub Packages (GPR).
 
@@ -64,7 +64,7 @@ Or invoke directly via an npm script:
 | `--gpr-dir <path>`   | Staging directory                 | `.gpr`                             |
 | `--artifacts <path>` | Output directory for `.tgz` files | `.artifacts`                       |
 | `--dist <path>`      | Build directory                   | `dist`                             |
-| `--scope <scope>`    | Package scope                     | `GPR_SCOPE` or `kazvizian`         |
+| `--scope <scope>`    | Package scope                     | `GPR_SCOPE` or `nazahex`           |
 | `--registry <url>`   | Registry URL                      | `GPR_REGISTRY` or GitHub Packages  |
 | `--name <name>`      | Override staged package name      | From `packlet.gprName` if provided |
 | `--include-readme`   | Include `README.md`               | true                               |

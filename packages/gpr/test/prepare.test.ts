@@ -179,8 +179,8 @@ describe("gpr prepare subcommand", () => {
     const staged = JSON.parse(
       fs.readFileSync(path.join(dir, ".gpr", "package.json"), "utf8")
     )
-    // Default scope (kazvizian) should be applied when override is invalid
-    expect(staged.name).toBe("@kazvizian/fixture-invalid")
+    // Default scope (nazahex) should be applied when override is invalid
+    expect(staged.name).toBe("@nazahex/fixture-invalid")
   })
 })
 
