@@ -62,7 +62,7 @@ export async function runCli(argv: readonly string[] = process.argv) {
             description: "Directory for tarballs (default: .artifacts)"
           }),
           scope: string({
-            description: "GitHub Packages scope (default env or kazvizian)"
+            description: "GitHub Packages scope (default env or nazahex)"
           }),
           registry: string({
             description: "Registry URL (default env or GitHub Packages)"
@@ -101,7 +101,7 @@ export async function runCli(argv: readonly string[] = process.argv) {
           }),
           scope: string({
             description:
-              "GitHub Packages scope (default: env GPR_SCOPE or kazvizian)"
+              "GitHub Packages scope (default: env GPR_SCOPE or nazahex)"
           }),
           registry: string({
             description:

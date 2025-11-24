@@ -3,14 +3,14 @@
   "version": "0.3.3",
   "description": "Umbrella CLI for packlet utilities (gpr, validate, list-artifacts).",
   "license": "MIT",
-  "homepage": "https://github.com/kazvizian/packlet-js",
+  "homepage": "https://github.com/nazahex/packlet-js",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/kazvizian/packlet-js.git",
+    "url": "git+https://github.com/nazahex/packlet-js.git",
     "directory": "packages/cli"
   },
   "bugs": {
-    "url": "https://github.com/kazvizian/packlet-js/issues"
+    "url": "https://github.com/nazahex/packlet-js/issues"
   },
   "author": {
     "name": "KazViz",
@@ -51,6 +51,7 @@
   },
   "packlet": {
     "gpr": true,
+    "scope": "nazahex",
     "gprName": "packlet-cli"
   },
   "publishConfig": {

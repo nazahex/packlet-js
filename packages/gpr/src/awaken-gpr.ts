@@ -20,7 +20,7 @@ export interface AwakenGprOptions {
   artifactsDir?: string
   /** Directory containing build outputs to publish. Defaults to dist under root. */
   distDir?: string
-  /** GitHub Packages scope, e.g. "kazvizian". Can be overridden by env GPR_SCOPE. */
+  /** GitHub Packages scope, e.g. "nazahex". Can be overridden by env GPR_SCOPE. */
   scope?: string
   /** GPR registry URL. Can be overridden by env GPR_REGISTRY. */
   registry?: string
@@ -119,7 +119,7 @@ export function awakenGpr(opts: AwakenGprOptions = {}): AwakenGprResult {
   }
 
   // Env-based configuration for reusability
-  const SCOPE = process.env.GPR_SCOPE || opts.scope || "kazvizian"
+  const SCOPE = process.env.GPR_SCOPE || opts.scope || "nazahex"
   const REGISTRY =
     process.env.GPR_REGISTRY || opts.registry || "https://npm.pkg.github.com/"
   const INCLUDE_README =
