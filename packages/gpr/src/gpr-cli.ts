@@ -1,3 +1,8 @@
+import {
+  loadPackletConfig,
+  readPackletEnv,
+  resolveGprOptions
+} from "@packlet/core"
 import type { AwakenGprOptions } from "./awaken-gpr"
 import { awakenGpr } from "./awaken-gpr"
 
@@ -7,11 +12,12 @@ import { awakenGpr } from "./awaken-gpr"
 /**
  * Handle the `gpr` CLI command.
  *
- * This function adapts raw Commander option objects into a strongly-typed
+ * This function adapts raw Clibu option objects into a strongly-typed
  * {@link AwakenGprOptions} and invokes {@link awakenGpr}. Any errors are
  * logged and the process exit code is set to `1` on failure.
  *
- * @param opts - Raw options object produced by Commander. Common fields:
+ * @param opts - Raw options object produced by the CLI wrapper (e.g. parsed
+ *               by clibu). Common fields include:
  *               `root`, `gprDir`, `artifacts`, `dist`, `scope`, `registry`,
  *               `name`, `includeReadme`, `includeLicense`.
  * @returns A promise that resolves when the operation completes.
@@ -20,17 +26,9 @@ import { awakenGpr } from "./awaken-gpr"
  * await handleGpr({ root: '.', dist: 'dist' })
  */
 export async function handleGpr(opts: Record<string, unknown>): Promise<void> {
-  const options: AwakenGprOptions = {
-    rootDir: opts.root as string | undefined,
-    gprDir: (opts.gprDir as string) ?? (opts["gpr-dir"] as string),
-    artifactsDir: (opts.artifacts as string) ?? (opts.artifactsDir as string),
-    distDir: opts.dist as string | undefined,
-    scope: opts.scope as string | undefined,
-    registry: opts.registry as string | undefined,
-    nameOverride: (opts.name as string) ?? (opts.nameOverride as string),
-    includeReadme: opts.includeReadme as boolean | undefined,
-    includeLicense: opts.includeLicense as boolean | undefined
-  }
+  const env = readPackletEnv()
+  const cfg = loadPackletConfig((opts.root as string) || process.cwd())
+  const options: AwakenGprOptions = resolveGprOptions({ cli: opts, env, cfg })
 
   try {
     const res = awakenGpr(options)
