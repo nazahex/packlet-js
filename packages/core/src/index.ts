@@ -8,6 +8,8 @@
  * validation and small package-related helpers.
  */
 export * from "./artifact"
+export * from "./cli-argv"
+export * from "./config"
 export * from "./crypto"
 export * from "./types"
 export * from "./utils"
