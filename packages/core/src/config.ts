@@ -146,9 +146,11 @@ export function resolveBuildOptions({
   defaults = {}
 }: ResolveCtx): ResolvedBuildOptions {
   const cfgBuild = cfg.build ?? {}
-  const cliFormats = coerceFormats(
-    (cli.formats ?? cli.cjs) ? "esm,cjs" : undefined
-  )
+  const cliFormats = cli.formats
+    ? coerceFormats(cli.formats)
+    : cli.cjs
+      ? coerceFormats("esm,cjs")
+      : undefined
   const envFormats = coerceFormats(env.BUILD_FORMATS)
   const formats = cliFormats ??
     envFormats ??
