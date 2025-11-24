@@ -69,7 +69,3 @@ For typical development workflows, the `packlet` package remains the recommended
 ## License
 
 MIT © KazViz
-
-```
-
-```
