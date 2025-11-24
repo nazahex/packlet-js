@@ -45,7 +45,12 @@
     "@packlet/cli": "^0.3.2",
     "@packlet/build": "^0.2.1"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "@packlet/core": "workspace:^",
+    "@packlet/gpr": "workspace:^",
+    "@packlet/cli": "workspace:^",
+    "@packlet/build": "workspace:^"
+  },
   "keywords": [
     "kazviz",
     "kazvizian",
