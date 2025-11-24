@@ -1,6 +1,12 @@
 import fs from "node:fs"
 import path from "node:path"
-import { writeArtifactsManifest } from "@packlet/core"
+import {
+  loadPackletConfig,
+  readPackletEnv,
+  resolveGprOptions,
+  resolveValidateOptions,
+  writeArtifactsManifest
+} from "@packlet/core"
 import type { AwakenGprOptions } from "./awaken-gpr"
 import { awakenGpr } from "./awaken-gpr"
 import { ensureGprName } from "./name-utils"
@@ -14,9 +20,9 @@ import { ensureGprName } from "./name-utils"
  * an artifacts manifest and supports CLI-style options for compatibility
  * with release tooling.
  *
- * @param opts - Raw options object produced by Commander. Recognized fields
- *               include `root`, `dist`, `gprDir`, `artifacts`, `scope`,
- *               `registry`, and `name`.
+ * @param opts - Raw options object produced by the CLI wrapper (e.g. parsed
+ *               by clibu). Recognized fields include `root`, `dist`,
+ *               `gprDir`, `artifacts`, `scope`, `registry`, and `name`.
  * @returns void. On failure the function logs an error and sets
  *          `process.exitCode = 1`.
  *
@@ -25,7 +31,14 @@ import { ensureGprName } from "./name-utils"
  */
 export function handlePrepare(opts: Record<string, unknown>): void {
   const rootDir = path.resolve((opts.root as string) || process.cwd())
-  const distDir = path.resolve(rootDir, (opts.dist as string) || "dist")
+  const env = readPackletEnv()
+  const cfg = loadPackletConfig(rootDir)
+  const { dist } = resolveValidateOptions({
+    cli: { ...opts, root: rootDir },
+    env,
+    cfg
+  })
+  const distDir = dist
 
   try {
     const pkgPath = path.join(rootDir, "package.json")
@@ -54,16 +67,12 @@ export function handlePrepare(opts: Record<string, unknown>): void {
       nameOverride = undefined
     }
 
-    const options: AwakenGprOptions = {
-      rootDir,
-      distDir,
-      gprDir: (opts.gprDir as string) ?? (opts["gpr-dir"] as string),
-      artifactsDir: (opts.artifacts as string) ?? (opts.artifactsDir as string),
-      scope: (opts.scope as string) || process.env.GPR_SCOPE,
-      registry:
-        (opts.registry as string) || process.env.GPR_REGISTRY || undefined,
-      nameOverride
-    }
+    const baseOptions = resolveGprOptions({
+      cli: { ...opts, root: rootDir },
+      env,
+      cfg
+    })
+    const options: AwakenGprOptions = { ...baseOptions, distDir, nameOverride }
 
     const res = awakenGpr(options)
     // always write artifacts manifest into artifactsDir (awakenGpr already does so),
