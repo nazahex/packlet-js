@@ -1,93 +1,75 @@
+<div align="center">
+
 # 📦️ @packlet/cli
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-%23007ACC.svg?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Bun](https://img.shields.io/badge/Bun-%23000000.svg?logo=bun&logoColor=white)](https://bun.sh)<br />
-![Conventional Commits](https://img.shields.io/badge/commit-conventional-blue.svg)
-[![Commitizen friendly](https://img.shields.io/badge/commitizen-friendly-brightgreen.svg)](http://commitizen.github.io/cz-cli/)
-![license](https://img.shields.io/github/license/kazvizian/packlet-js)<br />
-[![Turborepo](https://img.shields.io/badge/-Turborepo-EF4444?logo=turborepo&logoColor=white)](https://turbo.build)
-[![Changesets Butterfly](https://img.shields.io/badge/Changesets-🦋-white)](./CHANGELOG.md)
-[![Biome Linter & Formatted](https://img.shields.io/badge/Biome-60a5fa?style=flat&logo=biome&logoColor=white)](https://biomejs.dev/)
-
-[![gzip size](http://img.badgesize.io/https://unpkg.com/@packlet/cli@latest/dist/index.mjs?compression=gzip)](https://unpkg.com/@packlet/cli@latest/dist/index.mjs)
+[![Bun](https://img.shields.io/badge/Bun-%23000000.svg?logo=bun&logoColor=white)](https://bun.sh)
+![NodeJS](https://img.shields.io/badge/node.js-6DA55F?logo=node.js&logoColor=white)<br />
+![license](https://img.shields.io/github/license/kazvizian/packlet-js)
 
 </div>
 
-Umbrella CLI providing the `packlet` command across the monorepo.
+`@packlet/cli` provides the implementation behind the `packlet` command-line interface. It exposes the build, packaging, validation, and artifact utilities used across the Packlet toolchain.
 
-## Commands
+Most users should install the higher-level `packlet` package, which bundles this CLI with defaults and additional conveniences. Use `@packlet/cli` directly only when you specifically need the standalone CLI internals.
 
-### `packlet gpr`
+## Installation
 
-Prepare a GitHub Packages scoped variant and tarballs.
+```sh
+# bun
+bun add -D @packlet/cli
 
-Flags:
-`--root <path>` root directory (default: cwd)
-`--dist <path>` dist directory (default: dist)
-`--artifacts <path>` artifacts directory (default: .artifacts)
-`--gpr-dir <path>` staging directory (default: .gpr)
-`--scope <scope>` scope (default env `GPR_SCOPE` or `kazvizian`)
-`--registry <url>` registry (default env `GPR_REGISTRY` or GitHub Packages URL)
-`--name <name>` override package name (scoped or unscoped)
-`--include-readme` / `--no-include-readme`
-`--include-license` / `--no-include-license`
-`--json` emit artifacts manifest JSON to stdout
-`--manifest <file>` custom manifest output path
+# npm
+npm install -D @packlet/cli
+```
 
-### `packlet validate`
+## Usage
 
-Validate required dist entry files exist. By default the tool expects `index.mjs` and `index.d.ts` (it will accept `index.js` when present for CJS compatibility).
+When installed as a development dependency, the `packlet` binary becomes available through your package manager:
 
-Flags:
-`--root <path>` root directory (default: cwd)
-`--dist <path>` dist directory (default: dist)
-`--json` output JSON result
+```sh
+npx packlet --help
+```
 
-### `packlet list-artifacts`
+You may also invoke the commands via npm scripts:
 
-List `.tgz` tarball artifacts in a directory.
-
-Flags:
-`--artifacts <path>` artifacts directory (default: .artifacts)
-`--json` JSON output
-
-## JSON Manifest Structure
-
-Produced by `gpr` (and optionally `prepare` in `@packlet/gpr`):
-
-```json
+```jsonc
 {
-  "schemaVersion": 1,
-  "packageName": "<base-name>",
-  "scopedName": "@<scope>/<base-name>",
-  "version": "<semver>",
-  "artifacts": [
-    { "file": "<name>-<version>.tgz", "size": 12345, "sha512": "..." }
-  ]
+  "scripts": {
+    "build": "packlet build",
+    "gpr": "packlet gpr --root .",
+    "validate": "packlet validate --root .",
+    "list-artifacts": "packlet list-artifacts --artifacts .artifacts"
+  }
 }
 ```
 
-## Development
+The behavior matches the public `packlet` package, including configuration resolution and defaults.
 
-```fish
-bun install
-bun run build
-node packages/cli/dist/index.mjs list-artifacts --artifacts packages/gpr/.artifacts
-```
+## Commands overview
 
-## Relationship to `@packlet/gpr`
+The CLI offers four primary commands:
 
-`@packlet/gpr` implements the underlying packing logic (`awakenGpr`). This CLI wraps it and adds
-manifest/JSON convenience output.
+- **`packlet build`** — Bundles the package (ESM by default, optional CJS) and generates declaration files.
+- **`packlet gpr`** — Produces a GitHub Packages–compatible scoped variant and emits `.tgz` artifacts.
+- **`packlet validate`** — Verifies that required output files exist in `dist/`.
+- **`packlet list-artifacts`** — Enumerates `.tgz` files in an artifacts directory.
 
-Naming notes:
+All commands use the shared configuration model from `@packlet/core`, respecting overrides from CLI flags, environment variables, and `package.json.packlet`.
 
-- You can set `packlet.gprName` in a package's `package.json` (unscoped like `packlet-core` or fully scoped).
-- The `--name` flag (or `GPR_NAME`) also accepts unscoped or scoped values and overrides per-invocation.
-- In monorepos, naming defaults to the package's own name; in single-package repos we may also use the repo name.
+## When to use @packlet/cli
 
-For conditional staging in CI tests, use the `prepare` subcommand from `@packlet/gpr` directly.
+Install and use `@packlet/cli` directly if:
+
+- You are embedding the Packlet CLI within another system and require only the CLI implementation.
+- You maintain a wrapper or custom workflow that should not depend on the higher-level `packlet` meta-package.
+
+For typical development workflows, the `packlet` package remains the recommended entry point.
 
 ## License
 
 MIT © KazViz
+
+```
+
+```

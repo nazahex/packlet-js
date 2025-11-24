@@ -1,119 +1,106 @@
 <div align="center">
 
-# @packlet/gpr
+# 📦️ @packlet/gpr
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Bun](https://img.shields.io/badge/Bun-%23000000.svg?style=for-the-badge&logo=bun&logoColor=white)](https://bun.sh)<br />
-![Conventional Commits](https://img.shields.io/badge/commit-conventional-blue.svg)
-[![Commitizen friendly](https://img.shields.io/badge/commitizen-friendly-brightgreen.svg)](http://commitizen.github.io/cz-cli/)
-[![npm version](https://img.shields.io/npm/v/@packlet/gpr.svg)](https://www.npmjs.com/package/@packlet/gpr)
-![license](https://img.shields.io/github/license/kazvizian/packlet-gpr)
+[![TypeScript](https://img.shields.io/badge/TypeScript-%23007ACC.svg?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Bun](https://img.shields.io/badge/Bun-%23000000.svg?logo=bun&logoColor=white)](https://bun.sh)
+![NodeJS](https://img.shields.io/badge/node.js-6DA55F?logo=node.js&logoColor=white)<br />
+![license](https://img.shields.io/github/license/kazvizian/packlet-js)
 
-[![gzip size](http://img.badgesize.io/https://unpkg.com/@packlet/gpr@latest/dist/index.mjs?compression=gzip)](https://unpkg.com/@packlet/gpr@latest/dist/index.mjs)
+Lightweight tooling for preparing packages for distribution through GitHub Packages (GPR).
 
 </div>
 
-## Overview
+`@packlet/gpr` streamlines the creation of **GPR-compatible package variants** by generating deterministic staging directories and `.tgz` artifacts suitable for CI environments. It focuses on predictable behavior, minimal configuration, and compatibility with both standalone usage and the broader `packlet` toolchain.
 
-`@packlet/gpr` is a lightweight utility for preparing package variants compatible with **GitHub Packages (GPR)**.
-It focuses on **deterministic**, **local**, and **CI-friendly** workflows:
+This utility produces ready-to-publish artifacts but **does not perform publishing**. Publishing should be handled explicitly in your CI or release workflow.
 
-- Prepares a _scoped_ package (e.g. `@<scope>/<name>`) based on your project metadata.
-- Supports monorepo-friendly naming and a per-package override via `packlet.gprName` in `package.json`.
-- Copies build output (`dist/`) into a staging area `.gpr/` and generates `.tgz` tarballs for release.
+## Features
 
-The package provides two interfaces:
-
-- **CLI:** `packlet gpr` — convenient for local or CI use.
-- **API:** `awakenGpr(options)` — for use within JS/TS scripts.
-
-> **Note:** This tool only prepares packages and artifacts.
-> It does **not** publish automatically unless you add a publish step to your CI (see the CI section below).
-
-## Key Features
-
-- Creates a **staging package** in `.gpr/` with a properly scoped `package.json`.
-- Copies `dist/` into `.gpr/dist/`.
+- Generates a staged package in a dedicated directory (default: `.gpr/`).
+- Applies a scoped package name suitable for GitHub Packages.
+- Copies compiled output from `dist/` into the staging area.
 - Optionally includes `README.md` and `LICENSE`.
-- Uses `npm pack` to generate `.tgz` tarballs for both the root and scoped package (saved in `.artifacts/`).
-- Deterministic GPR package name resolution, with the following priority:
-  1. `GPR_NAME` / `nameOverride` option
-  2. Repository name from `package.json.repository` (if present)
-  3. `package.json.name` (scope removed if applicable)
+- Produces reproducible `.tgz` artifacts (default: `.artifacts/`).
+- Provides deterministic rules for deriving GPR package names.
+- Supports both CLI and programmatic usage.
 
 ## Installation
 
-Install as a **development dependency** (recommended):
-
 ```sh
 # npm
-npm i -D @packlet/gpr
+npm install -D @packlet/gpr
 
 # pnpm
 pnpm add -D @packlet/gpr
 
 # bun
-bun add -d @packlet/gpr
+bun add -D @packlet/gpr
 ```
 
 ## CLI Usage
 
-Once installed, the `packlet` binary becomes available (depending on your package manager).
-The main command is:
+If you use the `packlet` CLI:
 
 ```sh
 packlet gpr [options]
 ```
 
-**Example:**
+Or invoke directly via an npm script:
 
-```sh
-# Prepare a GPR variant for the package at ./packages/gpr
-packlet gpr --root packages/gpr --scope kazvizian
+```jsonc
+{
+  "scripts": {
+    "gpr": "node -e \"require('@packlet/gpr').awakenGpr({ rootDir: '.' })\""
+  }
+}
 ```
 
 ## CLI Options
 
-| Option                                       | Description                                  | Default                                         |
-| -------------------------------------------- | -------------------------------------------- | ----------------------------------------------- |
-| `--root <path>`                              | Root directory of the project                | Current working directory                       |
-| `--gpr-dir <path>`                           | Staging directory for GPR package            | `.gpr` in root                                  |
-| `--artifacts <path>`                         | Output directory for tarballs                | `.artifacts` in root                            |
-| `--dist <path>`                              | Build directory                              | `dist` in root                                  |
-| `--scope <scope>`                            | GPR scope                                    | `GPR_SCOPE` or `kazvizian`                      |
-| `--registry <url>`                           | GPR registry URL                             | `GPR_REGISTRY` or `https://npm.pkg.github.com/` |
-| `--name <name>`                              | Override package name (scoped or unscoped)   | Reads `packlet.gprName` if present              |
-| `--include-readme` / `--no-include-readme`   | Include or exclude `README.md`               | `true`                                          |
-| `--include-license` / `--no-include-license` | Include or exclude `LICENSE`                 | `true`                                          |
-| `--json`                                     | Emit artifacts manifest JSON to stdout       | `false`                                         |
-| `--manifest <file>`                          | Also write artifacts manifest to custom file | —                                               |
+| Option               | Description                       | Default                            |
+| -------------------- | --------------------------------- | ---------------------------------- |
+| `--root <path>`      | Project root directory            | Current directory                  |
+| `--gpr-dir <path>`   | Staging directory                 | `.gpr`                             |
+| `--artifacts <path>` | Output directory for `.tgz` files | `.artifacts`                       |
+| `--dist <path>`      | Build directory                   | `dist`                             |
+| `--scope <scope>`    | Package scope                     | `GPR_SCOPE` or `kazvizian`         |
+| `--registry <url>`   | Registry URL                      | `GPR_REGISTRY` or GitHub Packages  |
+| `--name <name>`      | Override staged package name      | From `packlet.gprName` if provided |
+| `--include-readme`   | Include `README.md`               | true                               |
+| `--include-license`  | Include `LICENSE`                 | true                               |
+| `--json`             | Print artifact manifest to stdout | false                              |
+| `--manifest <file>`  | Write artifact manifest to a file | —                                  |
 
 ## Output Structure
 
-- **Staging Package:** `<root>/.gpr`
-  Contains `package.json`, `dist/`, and optionally `README.md` / `LICENSE`.
-- **Tarball Artifacts:** `<root>/.artifacts`
-  Contains `.tgz` tarballs for both the root and scoped package.
+- **Staging directory:** `.gpr/`
+  Contains the staged `package.json`, `dist/`, and optional documentation files.
+
+- **Artifact directory:** `.artifacts/`
+  Contains generated `.tgz` files for the staged package.
 
 ## Environment Variables
 
-| Variable              | Description                          | Example                       |
-| --------------------- | ------------------------------------ | ----------------------------- |
-| `GPR_SCOPE`           | Default scope for GPR packages       | `kazvizian`                   |
-| `GPR_REGISTRY`        | Default registry URL                 | `https://npm.pkg.github.com/` |
-| `GPR_INCLUDE_README`  | Include `README.md` (`true`/`false`) | `true`                        |
-| `GPR_INCLUDE_LICENSE` | Include `LICENSE` (`true`/`false`)   | `true`                        |
-| `GPR_NAME`            | Override name (scoped or unscoped)   | `packlet-core` or `@acme/x`   |
+| Variable              | Description           | Example                       |
+| --------------------- | --------------------- | ----------------------------- |
+| `GPR_SCOPE`           | Default package scope | `acme`                        |
+| `GPR_REGISTRY`        | Registry URL          | `https://npm.pkg.github.com/` |
+| `GPR_INCLUDE_README`  | Include `README.md`   | `true`                        |
+| `GPR_INCLUDE_LICENSE` | Include `LICENSE`     | `true`                        |
+| `GPR_NAME`            | Override package name | `@acme/pkg`                   |
 
-## Package.json configuration
+Directory-related variables supported by `@packlet/core` are also recognized:
+`PACKLET_DIST_DIR`, `PACKLET_ARTIFACTS_DIR`, `PACKLET_GPR_DIR`.
 
-You can configure GPR behavior per package using a `packlet` block in `package.json`:
+## Package.json Configuration
+
+`@packlet/gpr` can be configured through a `packlet` block:
 
 ```jsonc
 {
   "packlet": {
     "gpr": true,
-    // Optional override; can be unscoped ("packlet-core") or fully scoped ("@acme/packlet-core").
     "gprName": "packlet-core"
   }
 }
@@ -121,32 +108,31 @@ You can configure GPR behavior per package using a `packlet` block in `package.j
 
 Rules:
 
-- If `gprName` is unscoped, the CLI applies `--scope` (or `GPR_SCOPE`) automatically, e.g. `@kazvizian/packlet-core`.
-- If `gprName` is fully scoped, it will be used verbatim.
-- Invalid values (e.g. containing spaces) are ignored with a warning.
+- Unscoped `gprName` values are automatically scoped using `--scope` or `GPR_SCOPE`.
+- Fully scoped names are used as-is.
+- Invalid values are ignored with a warning.
 
-## API Usage (Programmatic)
+**Precedence:**
+CLI flags > Environment variables > `package.json.packlet` > defaults.
 
-This package exports a single function, `awakenGpr`, which can be used in JavaScript or TypeScript scripts.
-
-**Example:**
+## Programmatic API
 
 ```ts
 import { awakenGpr } from "@packlet/gpr"
 
-const res = awakenGpr({
-  rootDir: "/path/to/pkg",
+const result = awakenGpr({
+  rootDir: "/path/to/project",
   scope: "acme",
   includeReadme: true
 })
 
-console.log(res.gprDir)
-console.log(res.artifactsDir)
-console.log(res.scopedName)
-console.log(res.version)
+console.log(result.scopedName)
+console.log(result.version)
+console.log(result.gprDir)
+console.log(result.artifactsDir)
 ```
 
-**Type definitions:**
+### Options
 
 ```ts
 interface AwakenGprOptions {
@@ -160,40 +146,26 @@ interface AwakenGprOptions {
 }
 ```
 
-## Package naming behavior (important)
+## Naming Behavior
 
-Name resolution differs slightly for single-package repos vs monorepos:
+`@packlet/gpr` derives a valid GPR package name using the following priority:
 
-Priority used by `awakenGpr`:
+1. **Explicit overrides**
+   - CLI `--name`
+   - `GPR_NAME`
+   - `packlet.gprName`
 
-1. Explicit overrides
+2. **Project metadata**
+   `package.json.name`, with any existing scope removed.
 
-- `packlet.gprName` in `package.json` (scoped or unscoped), or
-- `--name` flag / `GPR_NAME` env (scoped or unscoped)
+3. **Scope application**
+   If the selected name is unscoped, the configured scope is applied:
 
-2. Monorepos: prefer the package's own name
-
-- In a monorepo (e.g. `packages/*`), the base name comes from `package.json.name` (scope stripped).
-
-3. Single-package repos: repo or package name
-
-- If not in a monorepo and `repository.url` is present, the repo name may be used as base
-  when it differs from `package.json.name`.
-- Otherwise, fall back to `package.json.name` (scope stripped).
-
-All unscoped base names are combined with the selected scope (default `kazvizian`) to produce `@<scope>/<base>`.
-
-### Internal dependency version normalization (monorepo)
-
-When staging a GPR variant in a monorepo, internal dependency names are left unchanged (original npm names).
-Only version ranges using the `workspace:` protocol are normalized to concrete semver ranges, typically
-pinning to `^<internalVersion>` for `dependencies`, `peerDependencies`, and `optionalDependencies`.
-If a sibling package defines `packlet.gprName`, that affects only how THIS package itself is named for GPR,
-not how its dependencies are referenced.
+   ```
+   @<scope>/<name>
+   ```
 
 ## CI Example (GitHub Actions)
-
-A minimal example workflow (build + pack):
 
 ```yaml
 name: Build and Pack
@@ -207,64 +179,47 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 18
+
       - name: Install dependencies
         run: bun install
+
       - name: Build
         run: bun run build
+
       - name: Prepare GPR package
-        run: node packages/gpr/dist/index.js gpr --root ./packages/your-pkg --scope your-org
+        run: npx packlet gpr --root . --scope your-org
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: packlet-artifacts
-          path: packages/your-pkg/.artifacts
+          name: gpr-artifacts
+          path: .artifacts
 ```
 
-### Publishing to GitHub Packages
+### Publishing
 
-Publishing should be handled **separately** in CI to ensure control and security.
-
-- Use a secret token (`GPR_TOKEN`) — either a GitHub token or a Personal Access Token with `packages:write` permission.
-- Run the following in your CI step:
+Publishing should occur in a separate step using a token with `packages:write` permission:
 
 ```sh
-npm publish <path-to-tgz> --registry https://npm.pkg.github.com/
+npm publish <artifact.tgz> --registry https://npm.pkg.github.com/
 ```
-
-or publish directly from the `.gpr` directory if desired.
-
-## Design Philosophy: Packing vs Publishing
-
-This tool focuses deliberately on **packing**, not publishing, because:
-
-- Packing is **deterministic** and **local** — easy to test and reproduce.
-- Publishing involves **authentication**, **2FA**, **organization policies**, and **side effects** — better handled explicitly in CI with secrets.
-
-If you prefer a single command that performs both steps (pack + publish), a conservative subcommand like
-`packlet publish` may be introduced in the future — with safe defaults (`--dry-run`, explicit `--confirm`, and token requirements).
 
 ## Troubleshooting
 
-- **`dist/ not found`:** Make sure you’ve built your package first (`bun run build` or equivalent).
-- **Missing `.tgz` file:** Check the `npm pack` output — sometimes fallback names differ for scoped packages.
-- **Unexpected package name:** Use the `GPR_NAME` env variable or `--name` CLI flag to override it.
-- **Missing manifest JSON in CI:** Ensure you pass `--json` (for stdout) or `--manifest <file>` so downstream steps can locate `artifacts.json`.
-- **Extra temp directories:** Test fixtures may create `.temp/`; they clean up automatically, but you can safely add `.temp/` to `.gitignore`.
+- **`dist/` missing**
+  Ensure a build has been performed.
 
-## Testing & Contributing
+- **Artifacts not generated**
+  Review the output of `npm pack` for naming issues.
 
-Contributions are welcome!
-If you plan to add publishing capabilities, please include:
+- **Unexpected package name**
+  Override via `--name` or `GPR_NAME`.
 
-- Dry-run test cases
-- Unit tests for repo/name parsing and overrides
-- Documentation that clearly explains token/2FA implications
-- Keep CLI handlers lean: `prepare` lives in `src/prepare-gpr.ts`, full `gpr` logic in `src/gpr-cli.ts`.
-- When adding new flags, update this README table and the root monorepo README.
+- **Manifest not found in CI**
+  Use `--json` or `--manifest <file>` to emit the artifact manifest.
 
 ## License
 

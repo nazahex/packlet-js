@@ -3,66 +3,77 @@
 # 📦️ @packlet/build
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-%23007ACC.svg?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Bun](https://img.shields.io/badge/Bun-%23000000.svg?logo=bun&logoColor=white)](https://bun.sh)<br />
-![Conventional Commits](https://img.shields.io/badge/commit-conventional-blue.svg)
-[![Commitizen friendly](https://img.shields.io/badge/commitizen-friendly-brightgreen.svg)](http://commitizen.github.io/cz-cli/)
-![license](https://img.shields.io/github/license/kazvizian/packlet-js)<br />
-[![Turborepo](https://img.shields.io/badge/-Turborepo-EF4444?logo=turborepo&logoColor=white)](https://turbo.build)
-[![Changesets Butterfly](https://img.shields.io/badge/Changesets-🦋-white)](./CHANGELOG.md)
-[![Biome Linter & Formatted](https://img.shields.io/badge/Biome-60a5fa?style=flat&logo=biome&logoColor=white)](https://biomejs.dev/)
-
-[![gzip size](http://img.badgesize.io/https://unpkg.com/@packlet/build@latest/dist/index.mjs?compression=gzip)](https://unpkg.com/@packlet/build@latest/dist/index.mjs)
+[![Bun](https://img.shields.io/badge/Bun-%23000000.svg?logo=bun&logoColor=white)](https://bun.sh)
+![NodeJS](https://img.shields.io/badge/node.js-6DA55F?logo=node.js&logoColor=white)<br />
+![license](https://img.shields.io/github/license/kazvizian/packlet-js)
 
 </div>
 
-Lightweight, general-purpose build wrapper for TypeScript/JavaScript packages.
+`@packlet/build` is a focused, minimal build layer for TypeScript and JavaScript packages. It wraps Bun’s high-performance bundler with a clean, consistent interface tailored for libraries and CLIs—no heavy configuration, no multi-tool orchestration.
 
-- Outputs ESM by default: `dist/index.mjs` (CJS available via `--cjs`)
-- Emits TypeScript declarations to `dist/` via `tsc`
-- Minify on by default; sourcemaps are disabled by default (enable external maps explicitly with `--sourcemap external`)
-- Works in any Node/Bun project
-- Powers `packlet build` in the umbrella CLI
+If you want a predictable, modern build pipeline with ESM-first output, optional CJS, and automatic type generation, `@packlet/build` gives you exactly that with a single command or function call.
 
-## Install
+Use it standalone or as the build engine behind the higher-level `packlet` CLI.
 
-```fish
-# as a dev dependency
+## Features
+
+- **ESM by default** (`dist/index.mjs`), with optional **CJS output** (`dist/index.cjs`)
+- **TypeScript declarations** generated automatically into `dist/`
+- **Fast Bun-based bundling** with a single consistent interface
+- **Simple control** over sourcemaps, minification, externalization, and CLI executables
+- **Programmatic API** for embedding in your own tooling
+
+## Installation
+
+```sh
+# with bun
 bun add -D @packlet/build
 
-# npm
-# npm i -D @packlet/build
+# with npm
+npm install -D @packlet/build
 ```
 
-> **Note:** @packlet/build invokes `bun build` under the hood for bundling. Bun must be installed on the machine where you run the build (recommended Bun >= 1.2.0). If Bun is not available, the build step will fail. For CI or developer environments without Bun you can still call the programmatic API, but the CLI and scripts depend on Bun.
+> **Note:** `@packlet/build` uses `bun build` internally. Bun must be installed on the machine running the build (recommended: Bun ≥ 1.2.0).
+> For environments without Bun, you may still use the programmatic API with custom bundlers.
 
-## Scripts
+## Usage via npm scripts
 
-Use the provided binary or the umbrella CLI:
+Add build scripts to your `package.json`:
 
-```json
+```jsonc
 {
   "scripts": {
-    "build": "node ../build/dist/cli.mjs build --sourcemap none --external-auto",
-    "build:cli": "node ../build/dist/cli.mjs build --cjs --exec-js --sourcemap none --external-auto"
+    "build": "packlet-build build --sourcemap none --external-auto",
+    "build:cli": "packlet-build build --cjs --exec-js --sourcemap none --external-auto"
   }
 }
 ```
 
-Or via the umbrella CLI if you already use [`packlet`](https://npmjs.com/package/packlet):
+Run them normally:
 
-```fish
-packlet build
-packlet build --exec-js
+```sh
+npm run build
+# or
+bun run build
+```
+
+Or run the CLI directly using `npx` / `bunx`:
+
+```sh
+npx @packlet/build build --sourcemap none --external-auto
 ```
 
 ## Programmatic API
 
+You can also invoke the builder directly from JavaScript or TypeScript for full control:
+
 ```ts
 import { build } from "@packlet/build"
+
 await build({
   entry: "src/index.ts",
   outdir: "dist",
-  formats: ["esm"], // default
+  formats: ["esm"],
   sourcemap: "none",
   types: true,
   target: "node",
@@ -71,25 +82,29 @@ await build({
 })
 ```
 
+This API is ideal for custom workflows, monorepos, or script-driven build pipelines.
+
 ## CLI flags
 
-Flags accepted by both `packlet build` and `packlet-build build`:
+`packlet-build` supports the following build flags:
 
-- `--entry <file>`: default `src/index.ts`
-- `--outdir <dir>`: default `dist`
-- `--formats <list>`: default `esm` (use `--cjs` or `--formats esm,cjs` to also emit CJS)
-- `--sourcemap <kind>`: `external` | `none` (default `none`). Prefer `external` for dev/debug; `inline` is coerced to `external` to avoid embedding large base64 maps.
-- `--no-types`: skip `.d.ts` emission
-- `--target <target>`: default `node`
-- `--exec-js`: mark `dist/index.mjs` or `dist/index.cjs` executable (for CLIs)
-- `--cjs`: convenience flag to also emit `index.cjs` and imply `--exec-js`
-- `--no-minify`: disable minification
+- `--entry <file>`: entry file (default: `src/index.ts`)
+- `--outdir <dir>`: output directory (default: `dist`)
+- `--formats <list>`: comma-separated formats (default: `esm`)
+- `--cjs`: shorthand to also emit CommonJS (`index.cjs`)
+- `--sourcemap <kind>`: `external` or `none` (default: `none`)
+- `--no-types`: skip type declaration generation
+- `--target <target>`: build target (default: `node`)
+- `--exec-js`: mark generated output as executable (helpful for CLIs)
+- `--no-minify`: disable minification (enabled by default)
+- `--external <packages>`: specify external packages
+- `--external-auto`: automatically externalize dependencies and peerDependencies
 
-Notes:
+### Notes
 
-- Declarations are emitted with `tsc --emitDeclarationOnly` using your local `tsconfig.json`.
-- Sourcemaps are disabled by default for release builds. If you need sourcemaps for debugging, prefer `--sourcemap external` (we coerce `inline` to `external` to avoid embedding large inline maps in published bundles).
-- Prefer `--no-minify` while debugging locally.
+- Type declarations come from `tsc --emitDeclarationOnly`, always using your local `tsconfig.json`.
+- For debugging, prefer `--sourcemap external` to keep maps separate from published artifacts.
+- Disable minification (`--no-minify`) when inspecting bundles locally.
 
 ## License
 

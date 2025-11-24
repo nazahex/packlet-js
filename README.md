@@ -4,100 +4,155 @@
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-%23007ACC.svg?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Bun](https://img.shields.io/badge/Bun-%23000000.svg?logo=bun&logoColor=white)](https://bun.sh)<br />
-![Conventional Commits](https://img.shields.io/badge/commit-conventional-blue.svg)
-[![Commitizen friendly](https://img.shields.io/badge/commitizen-friendly-brightgreen.svg)](http://commitizen.github.io/cz-cli/)
-![license](https://img.shields.io/github/license/kazvizian/packlet-js)<br />
-[![Turborepo](https://img.shields.io/badge/-Turborepo-EF4444?logo=turborepo&logoColor=white)](https://turbo.build)
-[![Changesets Butterfly](https://img.shields.io/badge/Changesets-🦋-white)](./CHANGELOG.md)
-[![Biome Linter & Formatted](https://img.shields.io/badge/Biome-60a5fa?style=flat&logo=biome&logoColor=white)](https://biomejs.dev/)
-
-[![gzip size](http://img.badgesize.io/https://unpkg.com/packlet@latest/dist/index.mjs?compression=gzip)](https://unpkg.com/packlet@latest/dist/index.mjs)
+![license](https://img.shields.io/github/license/kazvizian/packlet-js)
 
 </div>
 
-A concise toolkit for packaging and creating deterministic release artifacts.
+Packlet is a small toolkit for building JavaScript/TypeScript packages and producing deterministic release artifacts.
 
-## Packages
+It gives you:
 
-- `@packlet/core` – Core utilities: artifact manifest, validation, name derivation, copy helpers
-- `@packlet/gpr` – Tools for preparing GitHub Packages (GPR) scoped variants and tarballs
-- `@packlet/cli` – Unified CLI exposing `packlet` commands (`gpr`, `validate`, `list-artifacts`)
-- `@packlet/build` – Lightweight build wrapper (ESM+CJS+d.ts) usable in any TS/JS package
+- A single CLI (`packlet`) for common tasks like building your package, validating your `dist/` folder, and preparing GitHub Packages (GPR) artifacts.
+- A set of focused libraries you can use directly if you only need one piece (build wrapper, GPR helper, core utilities).
 
-## Philosophy
+This repository contains the source code for the Packlet ecosystem. You can install and use each package independently from npm.
 
-- Deterministic packing and artifact generation belong to `packlet`.
-- Orchestration and publishing (CI, tokens, releases) are handled by `sailet` — see related docs in `docs/`.
-- Both interact through a stable `artifacts.json` manifest.
+## Getting started
 
-## Quick Start (monorepo)
+Most users only need the main `packlet` package, which provides the CLI and a small programmatic API.
+
+### Install
 
 ```sh
-# install & build
-bun install
-bun run build
+# with bun
+bun add -D packlet
 
-# prepare a GPR variant and output a JSON manifest
-node packages/cli/dist/index.mjs gpr --root packages/gpr --json
-
-# list artifacts (human or JSON output)
-node packages/cli/dist/index.mjs list-artifacts --artifacts packages/gpr/.artifacts
-node packages/cli/dist/index.mjs list-artifacts --artifacts packages/gpr/.artifacts --json
-
-# validate dist
-node packages/cli/dist/index.mjs validate --root packages/gpr --json
+# with npm
+npm install -D packlet
 ```
 
-## Build system
+You can also install it globally if you prefer:
 
-All packages are built with the lightweight wrapper `@packlet/build`, which standardizes:
+```sh
+bun add -g packlet
+# or
+npm install -g packlet
+```
 
-- ESM outputs: `dist/index.mjs` (CJS available via `--cjs` when explicitly requested)
-- Type declarations: `dist/index.d.ts` via `tsc --emitDeclarationOnly`
-- Minification: enabled by default (use `--no-minify` to disable during debugging)
+### Basic CLI usage
 
-Typical package scripts:
+Once installed, the `packlet` command is available in your project scripts or globally:
 
-```json
+```sh
+# build your package (ESM by default; add CJS with --cjs)
+packlet build
+
+# prepare a GitHub Packages (GPR) variant and emit a JSON manifest
+packlet gpr --root . --json
+
+# list generated tarball artifacts
+packlet list-artifacts --artifacts .artifacts
+
+# validate dist contents
+packlet validate --root . --json
+```
+
+You can configure default directories and options via `package.json` (see **Configuration** below) so that your CLI usage stays minimal.
+
+## Packages in the ecosystem
+
+Packlet is published as several npm packages. You can use the main `packlet` package, or pick the lower-level building blocks if you prefer.
+
+### `packlet`
+
+Main public package. Provides the `packlet` CLI and re-exports a small programmatic API for working with artifacts, validation, and GPR preparation.
+
+See the package README for full CLI and API details.
+
+### `@packlet/build`
+
+Lightweight build wrapper around Bun for TypeScript/JavaScript libraries and CLIs.
+
+Use it when you want a simple way to:
+
+- Bundle ESM (and optionally CJS) outputs.
+- Emit `.d.ts` type declarations.
+- Control sourcemaps and minification.
+
+You can call it via npm scripts or its programmatic API. See the `@packlet/build` README for usage examples and CLI flags.
+
+### `@packlet/core`
+
+Headless utilities that power Packlet’s configuration and artifact handling. Useful if you want to integrate Packlet’s behavior into your own tooling.
+
+Includes helpers for:
+
+- Artifact manifests (`artifacts.json`).
+- Dist validation.
+- Name derivation and repo name extraction.
+- Central configuration loading and environment variable handling.
+
+### `@packlet/gpr`
+
+Helper for preparing packages for GitHub Packages (GPR).
+
+Use it when you want to:
+
+- Stage a scoped package (e.g. `@your-scope/your-package`) in a separate directory.
+- Generate `.tgz` tarballs in a predictable artifacts directory.
+- Produce a machine-readable `artifacts.json` manifest.
+
+You can call it via the main `packlet gpr` command or consume the `@packlet/gpr` API directly.
+
+### `@packlet/cli`
+
+Internal CLI implementation underlying the `packlet` command. Most users will not need to install this directly; it exists so the CLI can be reused in different packaging setups.
+
+## Configuration overview
+
+Packlet commands can be configured via a `packlet` block in your `package.json`. Configuration is centralized in the `@packlet/core` library, which also reads environment variables.
+
+Typical configuration (simplified):
+
+```jsonc
 {
-  "scripts": {
-    "build": "node packages/build/dist/cli.mjs build --sourcemap none --external-auto",
-    "build:cli": "node packages/build/dist/cli.mjs build --cjs --exec-js --sourcemap none --external-auto"
-  },
-  "devDependencies": {
-    "@packlet/build": "workspace:*"
+  "packlet": {
+    "distDir": "dist",
+    "artifactsDir": ".artifacts",
+    "gprDir": ".gpr",
+    "build": {
+      "entry": "src/index.ts",
+      "outdir": "dist",
+      "formats": ["esm"],
+      "sourcemap": "none",
+      "types": true,
+      "target": "node",
+      "execJs": false,
+      "minify": true
+    },
+    "gpr": true,
+    "scope": "your-scope",
+    "registry": "https://npm.pkg.github.com/",
+    "includeReadme": true,
+    "includeLicense": true
   }
 }
 ```
 
-For CLI packages (including the umbrella `packlet` and `@packlet/cli`), `--exec-js` marks the built entry executable (prefers `index.mjs`).
+Configuration is resolved with the following precedence:
 
-## Changelogs
+1. CLI flags.
+2. Environment variables.
+3. `package.json.packlet`.
+4. Built-in defaults.
 
-Each package maintains its own `CHANGELOG.md` generated by Changesets during real releases. The umbrella `packlet` package contains an aggregate changelog that summarizes notable changes across all packages; it is populated only when a release is performed. This keeps history clear while avoiding noise between releases.
+For a full list of supported options and environment variables, see the `@packlet/core` README.
 
-## CLI Commands (`packlet`)
+## Artifacts manifest
 
-- `packlet build` – Build ESM + CJS outputs and emit `.d.ts` (flags: `--entry`, `--outdir`, `--formats`, `--sourcemap`, `--no-types`, `--target`, `--exec-js`, `--no-minify`)
-- `packlet gpr` – Prepare a GPR-staged package and tarballs
-  Flags: `--root`, `--gpr-dir`, `--artifacts`, `--dist`, `--scope`, `--registry`, `--name`,
-  `--include-readme`, `--no-include-readme`, `--include-license`, `--no-include-license`,
-  `--json`, `--manifest <file>`
+When you prepare a package for GitHub Packages using `packlet gpr`, Packlet can generate a small manifest describing the produced tarballs.
 
-- `packlet validate` – Verify required dist entries (`index.js`, `index.mjs`, `index.d.ts`)
-
-- `packlet list-artifacts` – List all `.tgz` files in an artifacts directory
-
-> [!NOTE]
->
-> `@packlet/gpr` also provides a lightweight `prepare` subcommand (mainly for CI or testing).
-> It conditionally stages the GPR variant if `packlet.gpr` is enabled and `dist/` exists.
-> Supported flags: `--root`, `--dist`, `--gpr-dir`, `--artifacts`, `--scope`, `--registry`, `--name`,
-> with optional `--json` and `--manifest <file>` for machine-readable output.
-
-## Artifacts Manifest
-
-Running `packlet gpr` generates `<root>/.artifacts/artifacts.json`:
+By default this is written to `<root>/.artifacts/artifacts.json` and looks like:
 
 ```json
 {
@@ -111,41 +166,11 @@ Running `packlet gpr` generates `<root>/.artifacts/artifacts.json`:
 }
 ```
 
-## Name derivation (for GPR)
+This is intended to be consumed by your CI or release tooling to decide what to upload or publish.
 
-Priority used when deriving the staged GPR package name:
+## Contributing
 
-1. Explicit overrides
-
-- `packlet.gprName` in `package.json` (scoped or unscoped), or
-- `--name` flag / `GPR_NAME` env (scoped or unscoped)
-
-2. Monorepo default: package name
-
-- In monorepos, we prefer the package's own name (scope stripped) as base.
-
-3. Single-package repos
-
-- Use repo name from `repository.url` if present, otherwise `package.json.name` (scope stripped).
-
-Unscoped bases are combined with the chosen scope (default `kazvizian`).
-
-You can set `packlet.gprName` to values like `packlet-core` (becomes `@kazvizian/packlet-core`) or a fully
-scoped value `@acme/packlet-core` to force a specific name.
-
-## Developer Notes
-
-Temporary test fixtures are created under `.temp/` and cleaned up automatically.
-
-### CI & Windows
-
-- Windows runners do not honor POSIX execute bits. Tests that verify `chmod +x` fall back to asserting file presence on Windows.
-- `npm pack` can be slow/flaky on Windows. The GPR preparation logic auto-skips packing when `CI=true` and the platform is Windows, or when `GPR_SKIP_PACK=true` is set.
-
-Environment variables:
-
-- `GPR_SKIP_PACK=true` — force skip `npm pack` in GPR preparation.
-- `CI=true` on Windows — implicitly skips `npm pack`.
+If you are interested in contributing to Packlet, please see `.github/CONTRIBUTING.md` in this repository for guidelines, development workflows, and notes about testing and CI.
 
 ## License
 
