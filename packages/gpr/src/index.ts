@@ -1,6 +1,14 @@
 #!/usr/bin/env node
 import { pathToFileURL } from "node:url"
-import { Command } from "commander"
+import { adaptSpaceSeparatedOptions, normalizeArgv } from "@packlet/core"
+import {
+  loadConfig as clibuLoadConfig,
+  run as clibuRun,
+  createCLI,
+  defineConfig,
+  flag,
+  string
+} from "clibu"
 import { awakenGpr } from "./awaken-gpr"
 import { handleGpr } from "./gpr-cli"
 import { handlePrepare } from "./prepare-gpr"
@@ -11,84 +19,125 @@ import { handlePrepare } from "./prepare-gpr"
 export { awakenGpr }
 
 /**
- * CLI entrypoint for `packlet`.
- *
- * Provides a `gpr` subcommand to prepare a GitHub Packages variant of the
- * package. This function constructs the Commander program and delegates
- * subcommand handling to `gpr-cli` and `prepare-gpr` modules.
- *
- * @param argv - Optional argv array (defaults to `process.argv`). Useful
- *               for tests and programmatic invocation.
- * @returns A promise that resolves once command parsing and execution
- *          completes.
+ * CLI entrypoint for `packlet` using `clibu`.
  */
-export async function runCli(
-  argv: readonly string[] = process.argv
-): Promise<void> {
-  const program = new Command()
-    .name("packlet")
-    .description("Utilities for preparing and publishing packages")
-    .version("0.1.0")
+export async function runCli(argv: readonly string[] = process.argv) {
+  const rawArgs = normalizeArgv(argv)
+  const stringOpts = [
+    "root",
+    "dist",
+    "gprDir",
+    "artifacts",
+    "scope",
+    "registry",
+    "name",
+    "manifest"
+  ]
+  const args = adaptSpaceSeparatedOptions(rawArgs, stringOpts)
 
-  // Lightweight 'prepare' helper used in tests and CI to conditionally stage GPR
-  program
-    .command("prepare")
-    .description(
-      "Prepare GPR variant if dist exists and packlet.gpr flag is enabled; writes basic output"
-    )
-    .option("--root <path>", "Root directory (default: cwd)")
-    .option("--dist <path>", "Built output directory (default: dist)")
-    .option(
-      "--gpr-dir <path>",
-      "Directory to stage GPR package (default: .gpr)"
-    )
-    .option(
-      "--artifacts <path>",
-      "Directory for tarballs (default: .artifacts)"
-    )
-    .option(
-      "--scope <scope>",
-      "GitHub Packages scope (default env or kazvizian)"
-    )
-    .option("--registry <url>", "Registry URL (default env or GitHub Packages)")
-    .option("--name <name>", "Override fully-scoped name or base name")
-    .action((opts: Record<string, unknown>) => {
-      // Delegate to the dedicated handler implemented in prepare-gpr.ts
-      handlePrepare(opts)
-    })
+  const cwd = process.cwd()
+  const loaded = await clibuLoadConfig(cwd)
+  if (loaded) {
+    const code = await clibuRun(cwd, args)
+    if (typeof code === "number") process.exitCode = code
+    return
+  }
 
-  program
-    .command("gpr")
-    .description("Prepare a GitHub Packages scoped build and tarballs")
-    .option("--root <path>", "Root directory (default: cwd)")
-    .option(
-      "--gpr-dir <path>",
-      "Directory to stage GPR package (default: .gpr)"
-    )
-    .option(
-      "--artifacts <path>",
-      "Directory for tarballs (default: .artifacts)"
-    )
-    .option("--dist <path>", "Built output directory (default: dist)")
-    .option(
-      "--scope <scope>",
-      "GitHub Packages scope (default: env GPR_SCOPE or kazvizian)"
-    )
-    .option(
-      "--registry <url>",
-      "Registry URL (default: env GPR_REGISTRY or https://npm.pkg.github.com/)"
-    )
-    .option("--name <name>", "Override package name for the scoped package")
-    .option("--include-readme", "Include README.md", undefined)
-    .option("--no-include-readme", "Do not include README.md")
-    .option("--include-license", "Include LICENSE", undefined)
-    .option("--no-include-license", "Do not include LICENSE")
-    .action(async (opts: Record<string, unknown>) => {
-      // Delegate to gpr-cli handler
-      await handleGpr(opts)
-    })
+  const cfg = defineConfig({
+    name: "packlet",
+    version: "0.1.0",
+    commands: {
+      prepare: {
+        description:
+          "Prepare GPR variant if dist exists and packlet.gpr flag is enabled; writes basic output",
+        options: {
+          root: string({ description: "Root directory (default: cwd)" }),
+          dist: string({
+            description: "Built output directory (default: dist)"
+          }),
+          gprDir: string({
+            description: "Directory to stage GPR package (default: .gpr)"
+          }),
+          artifacts: string({
+            description: "Directory for tarballs (default: .artifacts)"
+          }),
+          scope: string({
+            description: "GitHub Packages scope (default env or kazvizian)"
+          }),
+          registry: string({
+            description: "Registry URL (default env or GitHub Packages)"
+          }),
+          name: string({
+            description: "Override fully-scoped name or base name"
+          }),
+          json: flag({ description: "Emit JSON result" })
+        },
+        run(ctx) {
+          const pOpts = ctx.options as {
+            root?: string
+            dist?: string
+            artifacts?: string
+            gprDir?: string
+            scope?: string
+            registry?: string
+            name?: string
+            json?: boolean
+          }
+          handlePrepare(pOpts as Record<string, unknown>)
+        }
+      },
+      gpr: {
+        description: "Prepare a GitHub Packages scoped build and tarballs",
+        options: {
+          root: string({ description: "Root directory (default: cwd)" }),
+          gprDir: string({
+            description: "Directory to stage GPR package (default: .gpr)"
+          }),
+          artifacts: string({
+            description: "Directory for tarballs (default: .artifacts)"
+          }),
+          dist: string({
+            description: "Built output directory (default: dist)"
+          }),
+          scope: string({
+            description:
+              "GitHub Packages scope (default: env GPR_SCOPE or kazvizian)"
+          }),
+          registry: string({
+            description:
+              "Registry URL (default: env GPR_REGISTRY or https://npm.pkg.github.com/)"
+          }),
+          name: string({
+            description: "Override package name for the scoped package"
+          }),
+          includeReadme: flag({ description: "Include README.md" }),
+          includeLicense: flag({ description: "Include LICENSE" }),
+          json: flag({ description: "Emit JSON manifest" }),
+          manifest: string({ description: "Write manifest JSON to path" })
+        },
+        async run(ctx) {
+          const gOpts = ctx.options as {
+            root?: string
+            dist?: string
+            artifacts?: string
+            gprDir?: string
+            scope?: string
+            registry?: string
+            name?: string
+            includeReadme?: boolean
+            includeLicense?: boolean
+            json?: boolean
+            manifest?: string
+          }
+          await handleGpr(gOpts as Record<string, unknown>)
+        }
+      }
+    }
+  })
 
-  await program.parseAsync(argv)
+  const cli = createCLI(cfg)
+  const code = await cli.run(args)
+  if (typeof code === "number") process.exitCode = code
 }
 
 // Execute when run directly (support both CJS and ESM entrypoints)
@@ -107,4 +156,4 @@ const isEsmMain = (() => {
   }
 })()
 
-if (isCjsMain || isEsmMain) void runCli()
+if (isCjsMain || isEsmMain) void runCli(process.argv)
